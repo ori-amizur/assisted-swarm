@@ -18,6 +18,7 @@ from taskpool import TaskPool
 from withcontainerconfigs import WithContainerConfigs
 from threading import Event
 from typing import Dict
+from assisted_swarm_client.assisted_swarm import SwarmApi
 
 
 @dataclass
@@ -46,7 +47,8 @@ class ClusterConfig:
 
 
 class Cluster(RetryingStateMachine, WithContainerConfigs):
-    def __init__(self, cluster_config: ClusterConfig, swarm_agent_config: SwarmAgentConfig):
+    def __init__(self, cluster_config: ClusterConfig, swarm_agent_config: SwarmAgentConfig, swarm_client: SwarmApi):
+        self.swarm_client = swarm_client
         super().__init__(
             initial_state="Initializing",
             terminal_state="Done",
@@ -236,6 +238,7 @@ class Cluster(RetryingStateMachine, WithContainerConfigs):
                     agent_dir=self.agent_directory(agent_index),
                     fake_reboot_marker_path=self.dry_reboot_marker(agent_index),
                 ),
+                self.swarm_client,
             )
             for agent_index in range(self.total_agents)
         ]
